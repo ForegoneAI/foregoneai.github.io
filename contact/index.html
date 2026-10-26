@@ -91,11 +91,13 @@
 <section class="section">
   <div class="wrap">
     <div class="split split--wide-r split--top">
-      <div>
+      <!-- #partnership sits here, not on a [data-rv] child: those start 26px
+           low and slide up, so a link landing on one ends up under the nav -->
+      <div id="partnership">
         <p class="eyebrow" data-rv>Direct</p>
         <h2 class="d3" data-rv>We read every inquiry.</h2>
         <ul class="deets mt-m" data-rv data-rv-delay="0.1">
-          <li id="partnership"><span class="k">General</span><span class="v">info@foregone.ai</span></li>
+          <li><span class="k">General</span><span class="v">info@foregone.ai</span></li>
           <li><span class="k">Strategic Investment</span><span class="v">investors@foregone.ai</span></li>
         </ul>
       </div>
