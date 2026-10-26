@@ -109,6 +109,8 @@ button, input, textarea, select { font: inherit; color: inherit; }
   outline-offset: 3px;
   border-radius: 2px;
 }
+/* a section link focuses the section itself, which needs no ring */
+[tabindex="-1"]:focus { outline: none; }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 10px; }

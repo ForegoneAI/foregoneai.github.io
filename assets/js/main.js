@@ -1448,20 +1448,68 @@
   }
 
   /* ======================================================================
-     12c. In-page links — scroll to the section without putting #id in the URL
+     12c. Section links — land on a section without a #id in the URL
+     ----------------------------------------------------------------------
+     Links like "#index" or "../contact/#partnership" would leave the #id in
+     the address bar. A link to this page scrolls in place. A link to another
+     page goes to that page's plain URL and hands the section over in
+     sessionStorage, and the page scrolls to it on arrival. A page opened
+     with a #id anyway (an old link, a new tab) drops it from the URL.
      ====================================================================== */
-  function inPageLinks() {
-    // the skip link keeps the native jump, which also moves keyboard focus
-    $$('a[href^="#"]:not(.skip)').forEach((a) => {
-      const target = document.getElementById(a.getAttribute("href").slice(1));
-      if (!target) return;
-      a.addEventListener("click", (e) => {
-        if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  const SECTION_KEY = "fg:section";
+
+  function goToSection(target, instant) {
+    const root = document.documentElement;
+    if (instant) root.style.scrollBehavior = "auto"; // arriving on a page jumps, as before
+    // same landing as the native jump: scroll-margin keeps it clear of the nav
+    target.scrollIntoView({ block: "start" });
+    if (instant) root.style.scrollBehavior = "";
+    // the native jump also moved keyboard focus; the skip link relies on it
+    if (!target.hasAttribute("tabindex")) {
+      target.setAttribute("tabindex", "-1");
+      target.addEventListener("blur", () => target.removeAttribute("tabindex"), { once: true });
+    }
+    target.focus({ preventScroll: true });
+  }
+
+  function sectionLinks() {
+    // on document, so it runs after a link's own handlers and sees them cancel
+    // a click: a constellation label's first tap on a phone only reads it, and
+    // those handlers are bound late, as each form is built
+    document.addEventListener("click", (e) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const a = e.target.closest("a[href]");
+      if (!a) return;
+      const url = new URL(a.getAttribute("href"), location.href);
+      if (url.origin !== location.origin || !url.hash) return;
+      const id = decodeURIComponent(url.hash.slice(1));
+
+      if (url.pathname === location.pathname && url.search === location.search) {
+        const target = document.getElementById(id);
+        if (!target) return;
         e.preventDefault();
-        // same landing as the native jump: CSS scroll-behavior and scroll-margin apply
-        target.scrollIntoView({ block: "start" });
-      });
+        goToSection(target);
+        return;
+      }
+      // without storage, fall back to the native jump; the #id is dropped on arrival
+      try { sessionStorage.setItem(SECTION_KEY, id); } catch (err) { return; }
+      e.preventDefault();
+      location.assign(url.pathname + url.search);
     });
+
+    let id = "";
+    try { id = sessionStorage.getItem(SECTION_KEY) || ""; sessionStorage.removeItem(SECTION_KEY); } catch (err) {}
+    if (location.hash) {
+      id = id || decodeURIComponent(location.hash.slice(1));
+      history.replaceState(history.state, "", location.pathname + location.search);
+    }
+    const target = id && document.getElementById(id);
+    if (!target) return;
+    goToSection(target, true);
+    // fonts can still shift the layout until load; land again once it settles
+    if (document.readyState !== "complete") {
+      window.addEventListener("load", () => goToSection(target, true), { once: true });
+    }
   }
 
   /* ======================================================================
@@ -1475,7 +1523,7 @@
   function init() {
     nav(); progress(); reveals(); heroLines(); decode();
     cardGlow(); heroForm(); constellations(); field(); marquee();
-    forms(); insightFilters(); inPageLinks(); year();
+    forms(); insightFilters(); sectionLinks(); year();
     document.documentElement.classList.add("js-ready");
   }
 
