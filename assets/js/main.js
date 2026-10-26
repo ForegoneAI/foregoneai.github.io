@@ -1448,6 +1448,23 @@
   }
 
   /* ======================================================================
+     12c. In-page links — scroll to the section without putting #id in the URL
+     ====================================================================== */
+  function inPageLinks() {
+    // the skip link keeps the native jump, which also moves keyboard focus
+    $$('a[href^="#"]:not(.skip)').forEach((a) => {
+      const target = document.getElementById(a.getAttribute("href").slice(1));
+      if (!target) return;
+      a.addEventListener("click", (e) => {
+        if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        e.preventDefault();
+        // same landing as the native jump: CSS scroll-behavior and scroll-margin apply
+        target.scrollIntoView({ block: "start" });
+      });
+    });
+  }
+
+  /* ======================================================================
      13. Year stamp
      ====================================================================== */
   function year() {
@@ -1458,7 +1475,7 @@
   function init() {
     nav(); progress(); reveals(); heroLines(); decode();
     cardGlow(); heroForm(); constellations(); field(); marquee();
-    forms(); insightFilters(); year();
+    forms(); insightFilters(); inPageLinks(); year();
     document.documentElement.classList.add("js-ready");
   }
 
