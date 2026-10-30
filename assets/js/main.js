@@ -84,7 +84,9 @@
     };
     const page = keyOf(location.pathname);
     $$(".nav__links a, .drawer__links a").forEach((a) => {
-      if (keyOf(a.getAttribute("href")) === page) a.classList.add("is-active");
+      const href = a.getAttribute("href");
+      if (/^[a-z]+:/i.test(href)) return; // external (e.g. hanasi.io)
+      if (keyOf(href) === page) a.classList.add("is-active");
     });
   }
 
